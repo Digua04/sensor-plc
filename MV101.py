@@ -9,14 +9,16 @@ import time
 class MinimalSimulator:
     def __init__(self):
         self.store = ModbusSlaveContext(
-            hr=ModbusSequentialDataBlock(0, [0]*1000)
+            hr=ModbusSequentialDataBlock(1, [0]*1000)
         )
         self.context = ModbusServerContext(slaves=self.store, single=True)
         
         # Pysichal states
         self.mv101_do_open = 0    # PLC writes command (address 200)
-        self.mv101_di_zso = 0     # PLC reads status (address 100)
-        
+        self.mv101_do_close = 1   # PLC write command (address 201)
+        self.mv101_di_zso = 0     # PLC read status (address 100)
+        self.mv101_di_zsc = 0    # PLC read status (address 101)
+
         print("=" * 60)
         print("Minimal SWaT Simulator - MV101 Only")
         print("=" * 60)
@@ -31,6 +33,7 @@ class MinimalSimulator:
         Actuator feedback simulation logic.
         """
         self.mv101_di_zso = self.mv101_do_open
+        self.mv101_di_zsc = self.mv101_do_close
     
     def simulation_loop(self):
         """Main simulation loop running in a separate thread."""
@@ -38,18 +41,21 @@ class MinimalSimulator:
         while True:
             # 1. Read command from address 200 (written by PLC)
             try:
-                self.mv101_do_open = self.store.getValues(3, 200, count=1)[0]
+                self.mv101_do_open = self.store.getValues(3, 199, count=2)[0]
+                self.mv101_do_close = self.store.getValues(3, 199, count=2)[1]
+                print(f"Offset 199 count 2: {self.store.getValues(3, 199, count=2)}")
             except Exception as e:
-                print(f"Error reading register 200: {e}")
+                print(f"Error reading register 199: {e}")
             
             # 2. Actuator feedback logic
             self.actuator_feedback()
             
-            # 3. Write status to address 100 (read by PLC)
+            # 3. Write status to address 100 (in PLC) (read by PLC)
             try:
-                self.store.setValues(3, 100, [self.mv101_di_zso])
+                self.store.setValues(3, 99, [self.mv101_di_zso])
+                self.store.setValues(3, 100, [self.mv101_di_zsc])
             except Exception as e:
-                print(f"Error writing register 100: {e}")
+                print(f"Error writing register 99: {e}")
             
             # 4. Logging every 2 seconds
             if iteration % 2 == 0:  # print every 2 seconds
