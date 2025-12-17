@@ -35,8 +35,8 @@ python MV101.py
 
 ## Network Setup
 
-- Simulator IP: 192.168.1.100
-- PLC IP: 192.168.1.10
+- Simulator IP: 192.168.137.1
+- PLC1 IP: 192.168.137.10
 - Subnet: 255.255.255.0
 
 ## Testing
@@ -45,7 +45,7 @@ Use Modbus Poll or pymodbus client to test:
 ```python
 from pymodbus.client.sync import ModbusTcpClient
 
-client = ModbusTcpClient('192.168.1.100', port=502)
+client = ModbusTcpClient('192.168.137.10', port=502)
 client.connect()
 result = client.read_holding_registers(100, 1)
 print(result.registers)
